@@ -41,11 +41,13 @@ export const useAuth = () => {
         throw new Error("Email and password are required");
       }
 
-      // Create mock user
+      // Create mock user with token
+      const token = btoa(JSON.stringify({ email, time: Date.now() }));
       const user = {
         id: "user-1",
         email,
         full_name: email.split("@")[0], // Mock name from email
+        access_token: token,
       };
 
       saveJSON(MOCK_USER_KEY, user);
@@ -79,10 +81,12 @@ export const useAuth = () => {
         throw new Error("Email and password are required");
       }
 
+      const token = btoa(JSON.stringify({ email, time: Date.now() }));
       const user = {
         id: "user-" + Date.now(),
         email,
         full_name: fullName || email.split("@")[0],
+        access_token: token,
       };
 
       saveJSON(MOCK_USER_KEY, user);

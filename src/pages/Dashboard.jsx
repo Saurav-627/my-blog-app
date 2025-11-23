@@ -11,8 +11,10 @@ export const Dashboard = () => {
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    if(posts.length  === 0){
+      fetchPosts();
+    }
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -37,7 +39,8 @@ export const Dashboard = () => {
     });
   };
 
-  const userPosts = posts.filter((post) => post.user_id === user?.id);
+  // Show all posts for now since we're using a mock API
+  const userPosts = posts;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -72,7 +75,7 @@ export const Dashboard = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-slate-900">Your Posts</h2>
+          <h2 className="text-xl font-bold text-slate-900">All Posts</h2>
           <p className="text-slate-600 mt-1">
             {userPosts.length} {userPosts.length === 1 ? 'post' : 'posts'}
           </p>

@@ -24,7 +24,7 @@ export const PostForm = () => {
 
   useEffect(() => {
     if (isEditMode && id) {
-      const post = posts.find((p) => p.id === id);
+      const post = posts.find(p => +p?.id === +id);
       if (post) {
         setFormData({
           title: post.title,

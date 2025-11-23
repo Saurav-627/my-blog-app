@@ -1,7 +1,7 @@
 import axios from "axios";
 import { MOCK_USER_KEY } from "../hooks/useAuth";
 
-const token = MOCK_USER_KEY
+import { loadJSON } from "./json-store";
 
 const api = axios.create({
   'baseURL': import.meta.env.VITE_APP_API_ENDPOINT,
@@ -12,11 +12,10 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
-    const tokens = token;
-    if (!tokens?.access_token) {
-      return config;
+    const user = loadJSON(MOCK_USER_KEY);
+    if (user?.access_token) {
+      config.headers.Authorization = `Bearer ${user.access_token}`;
     }
-    config.headers.Authorization = `Bearer ${tokens.access_token}`;
     return config;
   },
   (error) => {
