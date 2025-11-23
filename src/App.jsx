@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { useRoutes } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
-import { createRouterConfig } from "./router";
+import { createRouterConfig } from "./router/router";
 
 function App() {
   const { isAuthenticated, loading } = useAuth();

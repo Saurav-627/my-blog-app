@@ -1,19 +1,19 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ProtectedRoute } from "../components/ProtectedRoute";
 
 // Lazy load components for better performance
 const Login = lazy(() =>
-  import("./pages/Login").then((module) => ({ default: module.Login }))
+  import("../pages/Login").then((module) => ({ default: module.Login }))
 );
 const Register = lazy(() =>
-  import("./pages/Register").then((module) => ({ default: module.Register }))
+  import("../pages/Register").then((module) => ({ default: module.Register }))
 );
 const Dashboard = lazy(() =>
-  import("./pages/Dashboard").then((module) => ({ default: module.Dashboard }))
+  import("../pages/Dashboard").then((module) => ({ default: module.Dashboard }))
 );
 const PostForm = lazy(() =>
-  import("./pages/PostForm").then((module) => ({ default: module.PostForm }))
+  import("../pages/PostForm").then((module) => ({ default: module.PostForm }))
 );
 
 // Root redirect component

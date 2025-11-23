@@ -109,12 +109,9 @@ export const useAuth = () => {
     }
   }, []);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(() => {
     try {
       setAuthState((prev) => ({ ...prev, loading: true, error: null }));
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
       saveJSON(MOCK_USER_KEY, null);
 
