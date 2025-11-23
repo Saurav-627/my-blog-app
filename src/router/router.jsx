@@ -15,6 +15,9 @@ const Dashboard = lazy(() =>
 const PostForm = lazy(() =>
   import("../pages/PostForm").then((module) => ({ default: module.PostForm }))
 );
+const BlogPost = lazy(() =>
+  import("../pages/BlogPost").then((module) => ({ default: module.BlogPost }))
+);
 
 // Root redirect component
 const RootRedirect = ({ isAuthenticated }) => {
@@ -58,6 +61,10 @@ export const createRouterConfig = (isAuthenticated) => [
         <PostForm />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: "/posts/:id",
+    element: <BlogPost />,
   },
   {
     path: "*",
