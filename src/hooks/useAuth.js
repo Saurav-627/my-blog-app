@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { loadJSON, saveJSON } from "../services/json-store";
 
 export const MOCK_USER_KEY = "blog_app_user";
@@ -136,13 +136,24 @@ export const useAuth = () => {
     }
   }, []);
 
-  return {
-    user: authState.user,
-    loading: authState.loading,
-    error: authState.error,
-    isAuthenticated: !!authState.user,
-    login,
-    register,
-    logout,
-  };
+  // Memoize the return object to prevent unnecessary re-renders
+  return useMemo(
+    () => ({
+      user: authState.user,
+      loading: authState.loading,
+      error: authState.error,
+      isAuthenticated: !!authState.user,
+      login,
+      register,
+      logout,
+    }),
+    [
+      authState.user,
+      authState.loading,
+      authState.error,
+      login,
+      register,
+      logout,
+    ]
+  );
 };

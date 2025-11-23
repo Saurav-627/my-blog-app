@@ -1,7 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePosts } from "../hooks/usePosts";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
+import Input from "../components/Input";
+import ShowToast from "../components/ShowToast";
+import { FormHeader } from "../components/forms/FormHeader";
+import { CategorySelect } from "../components/forms/CategorySelect";
 
 export const PostForm = () => {
   const { id } = useParams();
@@ -24,7 +28,7 @@ export const PostForm = () => {
 
   useEffect(() => {
     if (isEditMode && id) {
-      const post = posts.find(p => +p?.id === +id);
+      const post = posts.find((p) => +p?.id === +id);
       if (post) {
         setFormData({
           title: post.title,
@@ -38,7 +42,7 @@ export const PostForm = () => {
     }
   }, [isEditMode, id, posts]);
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     if (!formData.title.trim()) {
       setError("Title is required");
       return false;
@@ -52,182 +56,134 @@ export const PostForm = () => {
       return false;
     }
     return true;
-  };
+  }, [formData.title, formData.content]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setError("");
 
-    if (!validateForm()) return;
+      if (!validateForm()) {
+        ShowToast("Failed to submit. please check the form ", "error");
+        return;
+      }
 
-    setSubmitting(true);
+      setSubmitting(true);
 
-    const postData = {
-      title: formData.title.trim(),
-      content: formData.content.trim(),
-      excerpt: formData.excerpt.trim() || undefined,
-      category: formData.category,
-      tags: formData.tags
-        ? formData.tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter((tag) => tag)
-        : [],
-      published: formData.published,
-    };
+      const postData = {
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        excerpt: formData.excerpt.trim() || undefined,
+        category: formData.category,
+        tags: formData.tags
+          ? formData.tags
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter((tag) => tag)
+          : [],
+        published: formData.published,
+        created_at: new Date().toISOString(),
+      };
 
-    const result =
-      isEditMode && id
-        ? await updatePost(id, postData)
-        : await addPost(postData);
+      const result =
+        isEditMode && id
+          ? await updatePost(id, postData)
+          : await addPost(postData);
 
-    setSubmitting(false);
+      setSubmitting(false);
 
-    if (result.success) {
-      navigate("/dashboard");
-    } else {
-      setError(result.error || "Failed to save post");
-    }
-  };
+      if (result.success) {
+        ShowToast(
+          isEditMode
+            ? "Post updated successfully!"
+            : "Post created successfully!",
+          "success"
+        );
+        navigate("/dashboard");
+      } else {
+        ShowToast(result.error || "Failed to save post", "error");
+        setError(result.error || "Failed to save post");
+      }
+    },
+    [formData, validateForm, isEditMode, id, updatePost, addPost, navigate]
+  );
 
-  const categories = [
-    { value: "general", label: "General" },
-    { value: "technology", label: "Technology" },
-    { value: "lifestyle", label: "Lifestyle" },
-    { value: "business", label: "Business" },
-    { value: "health", label: "Health" },
-    { value: "travel", label: "Travel" },
-  ];
+  const handleFieldChange = useCallback(
+    (field) => (e) => {
+      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    },
+    []
+  );
 
-  function handleCategoryChange(e) {
-    setFormData((prev) => ({ ...prev, category: e.target.value }));
-  }
+  const handlePublishedChange = useCallback((e) => {
+    setFormData((prev) => ({ ...prev, published: e.target.checked }));
+  }, []);
+
+  const handleBack = useCallback(() => {
+    navigate("/dashboard");
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white shadow-sm border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-2xl font-bold text-slate-900">
-              {isEditMode ? "Edit Post" : "Create New Post"}
-            </h1>
-          </div>
-        </div>
-      </header>
+      <FormHeader isEditMode={isEditMode} onBack={handleBack} />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-slate-700 mb-2"
-              >
-                Title *
-              </label>
-              <input
-                id="title"
-                type="text"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                placeholder="Enter post title"
+            <Input
+              id="title"
+              type="text"
+              label="Title"
+              value={formData.title}
+              onChange={handleFieldChange("title")}
+              placeholder="Enter post title"
+              disabled={submitting || loading}
+              required
+            />
+
+            <Input
+              id="excerpt"
+              type="textarea"
+              label="Excerpt"
+              value={formData.excerpt}
+              onChange={handleFieldChange("excerpt")}
+              rows={2}
+              placeholder="Brief summary of your post"
+              disabled={submitting || loading}
+            />
+
+            <Input
+              id="content"
+              type="textarea"
+              label="Content"
+              value={formData.content}
+              onChange={handleFieldChange("content")}
+              rows={12}
+              placeholder="Write your post content here..."
+              disabled={submitting || loading}
+              required
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+              <CategorySelect
+                value={formData.category}
+                onChange={handleFieldChange("category")}
                 disabled={submitting || loading}
               />
-            </div>
-
-            <div>
-              <label
-                htmlFor="excerpt"
-                className="block text-sm font-medium text-slate-700 mb-2"
-              >
-                Excerpt
-              </label>
-              <textarea
-                id="excerpt"
-                value={formData.excerpt}
-                onChange={(e) =>
-                  setFormData({ ...formData, excerpt: e.target.value })
-                }
-                rows={2}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
-                placeholder="Brief summary of your post"
-                disabled={submitting || loading}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="content"
-                className="block text-sm font-medium text-slate-700 mb-2"
-              >
-                Content *
-              </label>
-              <textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                rows={12}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none resize-none"
-                placeholder="Write your post content here..."
-                disabled={submitting || loading}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="category"
-                  className="block text-sm font-medium text-slate-700 mb-2"
-                >
-                  Category
-                </label>
-                <select
-                  id="category"
-                  value={formData.category}
-                  onChange={handleCategoryChange}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                  disabled={submitting || loading}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
               <div>
-                <label
-                  htmlFor="tags"
-                  className="block text-sm font-medium text-slate-700 mb-2"
-                >
-                  Tags
-                </label>
-                <input
+                <Input
                   id="tags"
                   type="text"
+                  label="Tags"
                   value={formData.tags}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tags: e.target.value })
-                  }
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  onChange={handleFieldChange("tags")}
                   placeholder="react, javascript, web"
                   disabled={submitting || loading}
                 />
@@ -242,9 +198,7 @@ export const PostForm = () => {
                 id="published"
                 type="checkbox"
                 checked={formData.published}
-                onChange={(e) =>
-                  setFormData({ ...formData, published: e.target.checked })
-                }
+                onChange={handlePublishedChange}
                 className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
                 disabled={submitting || loading}
               />
@@ -256,12 +210,12 @@ export const PostForm = () => {
               </label>
             </div>
 
-            <div className="flex items-center justify-between pt-6 border-t border-slate-200">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-between gap-3 pt-6 border-t border-slate-200">
               <button
                 type="button"
-                onClick={() => navigate("/dashboard")}
-                className="px-6 py-3 text-slate-700 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                onClick={handleBack}
                 disabled={submitting}
+                className="w-full sm:w-auto px-6 py-3 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors border border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -269,7 +223,7 @@ export const PostForm = () => {
               <button
                 type="submit"
                 disabled={submitting || loading}
-                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 {submitting
