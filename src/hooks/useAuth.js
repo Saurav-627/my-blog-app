@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { saveJSON } from "../services/json-store";
+import { loadJSON, saveJSON } from "../services/json-store";
 
 export const MOCK_USER_KEY = "blog_app_user";
 
@@ -11,11 +11,11 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem(MOCK_USER_KEY);
+    const storedUser = loadJSON(MOCK_USER_KEY);
     if (storedUser) {
       try {
         setAuthState({
-          user: JSON.parse(storedUser),
+          user: storedUser,
           loading: false,
           error: null,
         });
@@ -48,7 +48,7 @@ export const useAuth = () => {
         full_name: email.split("@")[0], // Mock name from email
       };
 
-      saveJSON(MOCK_USER_KEY, JSON.stringify(user));
+      saveJSON(MOCK_USER_KEY, user);
 
       setAuthState({
         user,
@@ -85,7 +85,7 @@ export const useAuth = () => {
         full_name: fullName || email.split("@")[0],
       };
 
-      localStorage.setItem(MOCK_USER_KEY, JSON.stringify(user));
+      saveJSON(MOCK_USER_KEY, user);
 
       setAuthState({
         user,

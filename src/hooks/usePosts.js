@@ -8,6 +8,8 @@ import {
   deletePost as deletePostAction,
   setError,
 } from '../store/postsSlice';
+import { loadJSON, saveJSON } from '../services/json-store';
+import { MOCK_USER_KEY } from './useAuth';
 
 const STORAGE_KEY = 'blog_app_posts';
 
@@ -19,21 +21,16 @@ export const usePosts = () => {
     try {
       dispatch(setLoading(true));
 
-      // Check local storage first
-      const storedPosts = localStorage.getItem(STORAGE_KEY);
+      const storedPosts = loadJSON(STORAGE_KEY);
       
       if (storedPosts) {
-        dispatch(setPosts(JSON.parse(storedPosts)));
+        dispatch(setPosts(storedPosts));
       } else {
-        // Fetch from JSONPlaceholder if no local data
         const response = await fetch('https://jsonplaceholder.typicode.com/posts');
         if (!response.ok) throw new Error('Failed to fetch posts');
         
         const data = await response.json();
         
-        // Transform data to match our app structure
-        // JSONPlaceholder posts have: userId, id, title, body
-        // We need: id, title, content (body), created_at, user_id, etc.
         const transformedPosts = data.slice(0, 10).map(post => ({
           id: post.id,
           title: post.title,
@@ -45,12 +42,12 @@ export const usePosts = () => {
           category: 'General',
           tags: ['mock', 'placeholder'],
           profiles: {
-            full_name: 'Saurav Luitek',
+            full_name: 'Saurav Luitel',
             email: 'saurav@gmail.com'
           }
         }));
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(transformedPosts));
+        saveJSON(STORAGE_KEY, transformedPosts);
         dispatch(setPosts(transformedPosts));
       }
       
@@ -66,11 +63,9 @@ export const usePosts = () => {
     try {
       dispatch(setLoading(true));
       
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Get current user from local storage
-      const user = JSON.parse(localStorage.getItem('blog_app_user'));
+      const user = loadJSON(MOCK_USER_KEY);
       
       const newPost = {
         ...postData,
@@ -84,9 +79,9 @@ export const usePosts = () => {
       };
 
       // Update local storage
-      const currentPosts = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const currentPosts = loadJSON(STORAGE_KEY);
       const updatedPosts = [newPost, ...currentPosts];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPosts));
+      saveJSON(STORAGE_KEY, updatedPosts);
 
       dispatch(addPostAction(newPost));
       return { success: true, data: newPost };
@@ -105,7 +100,7 @@ export const usePosts = () => {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Update local storage
-      const currentPosts = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const currentPosts = loadJSON(STORAGE_KEY);
       const index = currentPosts.findIndex(p => p.id === id);
       
       if (index === -1) throw new Error('Post not found');
@@ -113,11 +108,12 @@ export const usePosts = () => {
       const updatedPost = { ...currentPosts[index], ...postData };
       currentPosts[index] = updatedPost;
       
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPosts));
+      saveJSON(STORAGE_KEY, currentPosts);
 
       dispatch(updatePostAction(updatedPost));
       return { success: true, data: updatedPost };
     } catch (err) {
+      console.error(err); 
       const errorMessage = err instanceof Error ? err.message : 'Failed to update post';
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };
@@ -132,10 +128,10 @@ export const usePosts = () => {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Update local storage
-      const currentPosts = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const currentPosts = loadJSON(STORAGE_KEY) || [];
       const updatedPosts = currentPosts.filter(p => p.id !== id);
       
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPosts));
+      saveJSON(STORAGE_KEY, updatedPosts);
 
       dispatch(deletePostAction(id));
       return { success: true };
